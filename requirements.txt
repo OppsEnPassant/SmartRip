@@ -4,3 +4,4 @@ jinja2
 yt-dlp
 openai-whisper
 ffmpeg-python
+python-multipart
