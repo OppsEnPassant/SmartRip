@@ -44,4 +44,3 @@ def transcribe_audio(audio_path, language="en"):
         f.write(text)
 
     return text
-o
