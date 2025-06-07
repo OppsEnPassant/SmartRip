@@ -1,0 +1,118 @@
+﻿<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <title>🎬 Video Downloader + Transcriber</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        };
+        // Toggle dark mode
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        async function submitForm(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const result = document.getElementById("result");
+            const videoPlayer = document.getElementById("videoPlayer");
+            const transcriptBox = document.getElementById("transcript");
+
+            result.innerText = "⏳ Downloading and processing...";
+            videoPlayer.classList.add("hidden");
+            transcriptBox.classList.add("hidden");
+            videoPlayer.src = "";
+            transcriptBox.innerText = "";
+
+            try {
+                const res = await fetch("http://localhost:8000/process", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+
+                result.innerText = "✅ Download complete!";
+
+                if (data.video) {
+                    videoPlayer.src = data.video;
+                    videoPlayer.classList.remove("hidden");
+                }
+                if (data.transcript) {
+                    transcriptBox.innerText = "📝 Transcript:\n" + data.transcript;
+                    transcriptBox.classList.remove("hidden");
+                }
+
+                document.getElementById("downloadLinks").innerHTML = `
+              <a href="${data.video}" download class="text-indigo-500 underline block mt-2">⬇️ Download Video</a>
+              ${data.transcript ? `<a href="${data.transcript}" download class="text-indigo-500 underline mt-1">📝 Download Transcript</a>` : ""}
+            `;
+            } catch (error) {
+                result.innerText = "❌ Error: " + error;
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans p-6 transition-colors duration-500">
+    <div class="max-w-xl mx-auto bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 space-y-6 transition-all duration-500">
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
+                <i data-lucide="download" class="w-6 h-6"></i>
+                Video Downloader + Transcriber
+            </h1>
+            <button onclick="toggleDarkMode()" class="p-2 rounded bg-indigo-200 dark:bg-indigo-700 text-indigo-800 dark:text-white">
+                <i data-lucide="moon" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form onsubmit="submitForm(event)" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium">🔗 Video/Playlist URL:</label>
+                <input name="url" required class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
+            </div>
+            <div class="flex items-center space-x-2">
+                <input name="is_playlist" type="checkbox" class="accent-indigo-600" />
+                <label>📋 Download entire playlist?</label>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">🎞️ Video Quality:</label>
+                <select name="quality" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
+                    <option value="best">Best</option>
+                    <option value="worst">Worst</option>
+                    <option value="audio">Audio only</option>
+                    <option value="video">Video only</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">💾 Filename Template:</label>
+                <input name="filename_template" placeholder="%(title)s" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
+            </div>
+            <div class="flex items-center space-x-2">
+                <input name="transcribe" type="checkbox" class="accent-indigo-600" />
+                <label>🧠 Transcribe audio?</label>
+            </div>
+            <div>
+                <label class="block text-sm font-medium">⚙️ Whisper Model:</label>
+                <input name="whisper_model" value="base" class="w-full p-2 border rounded mt-1 bg-gray-50 dark:bg-gray-700 dark:border-gray-600" />
+            </div>
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded transition">
+                🚀 Start Download
+            </button>
+        </form>
+
+        <div id="downloadLinks" class="text-sm mt-4"></div>
+
+        <pre id="result" class="bg-gray-100 dark:bg-gray-700 p-3 rounded text-sm whitespace-pre-wrap">⏱ Waiting...</pre>
+
+        <video id="videoPlayer" controls class="hidden w-full rounded mt-4 shadow"></video>
+
+        <pre id="transcript" class="bg-white dark:bg-gray-700 p-3 rounded text-sm whitespace-pre-wrap hidden"></pre>
+    </div>
+
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
